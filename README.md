@@ -58,4 +58,3 @@ The app can be easily deployed to Netlify by building the app and uploading the 
 
 This project is licensed under the MIT License.
 
-This version of the `README.md` file provides a high-level overview of the app, how it works, and basic instructions on running it locally or deploying it.
