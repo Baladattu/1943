@@ -1,6 +1,5 @@
 Here’s a concise version of the `README.md` file for your QR code food calorie scanner app:
 
-```markdown
 # QR Code Food Calorie Scanner
 
 A simple React application that uses the device camera to scan QR codes containing food item information. Once scanned, the app calculates and displays the total calories of the food items based on predefined calorie values.
@@ -60,7 +59,5 @@ The app can be easily deployed to Netlify by building the app and uploading the 
 ## License
 
 This project is licensed under the MIT License.
-
-```
 
 This version of the `README.md` file provides a high-level overview of the app, how it works, and basic instructions on running it locally or deploying it.
