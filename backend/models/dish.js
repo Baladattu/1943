@@ -1,8 +1,6 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 const DishSchema = new mongoose.Schema({
-    name: String,
-    ingredients: String,
+  name: String,
+  ingredients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' }]
 });
-
-const dish = mongoose.model('Dish', DishSchema);
-export default dish;
+module.exports = mongoose.model('Dish', DishSchema);

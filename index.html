@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>QR Code Scanner</h1>
+    <video id="preview"></video>
+    <p id="qr-result">No QR code detected.</p>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 80%;
+            max-width: 600px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #qr-result {
+            font-size: 18px;
+            color: #333;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        let data = [
+            {
+                name: "Idli",
+                calories: 90,
+                quantity: 1
+            },
+            {
+                name: "Rice",
+                calories: 150,
+                quantity: 1
+            },
+            {
+                name: "Sambar",
+                calories: 110,
+                quantity: 1
+            },
+            {
+                name: "Chutney",
+                calories: 50,
+                quantity: 1
+            },
+            {
+                name: "Wada",
+                calories: 200,
+                quantity: 1
+            },
+            {
+                name: "Panner Curry",
+                calories: 150,
+                quantity: 1
+            },
+            {
+                name: "Sesional Veg Curry",
+                calories: 150,
+                quantity: 1
+            },
+            {
+                name: "Dal",
+                calories: 115,
+                quantity: 1
+            },
+            {
+                name: "Papad",
+                calories: 90,
+                quantity: 1
+            },
+            {
+                name: "Soup",
+                calories: 70,
+                quantity: 1
+            },
+            {
+                name: "Pickle",
+                calories: 15,
+                quantity: 1
+            },
+            {
+                name: "Chapati",
+                calories: 100,
+                quantity: 1
+            },
+            {
+                name: "Raita",
+                calories: 70,
+                quantity: 1
+            },
+            {
+                name: "Gulab Jamun",
+                calories: 200,
+                quantity: 1
+            }
+        ];
+
+        const startButton = document.createElement('button');
+        startButton.textContent = 'Start QR Scanner';
+        startButton.style.fontSize = '18px';
+        startButton.style.padding = '10px 20px';
+        startButton.style.marginTop = '20px';
+        startButton.style.cursor = 'pointer';
+        startButton.style.border = 'none';
+        startButton.style.borderRadius = '5px';
+        startButton.style.backgroundColor = '#333';
+        startButton.style.color = '#fff';
+        document.body.appendChild(startButton);
+
+        startButton.onclick = () => {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function (stream) {
+                startButton.style.display = 'none';
+                const video = document.getElementById('preview');
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+                video.play();
+                requestAnimationFrame(tick);
+            });
+        };
+
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'Restart QR Scanner';
+        restartButton.style.fontSize = '18px';
+        restartButton.style.padding = '10px 20px';
+        restartButton.style.marginTop = '20px';
+        restartButton.style.cursor = 'pointer';
+        restartButton.style.border = 'none';
+        restartButton.style.borderRadius = '5px';
+        restartButton.style.backgroundColor = '#333';
+        restartButton.style.color = '#fff';
+        document.body.insertBefore(restartButton, document.getElementById('preview').nextSibling);
+
+        restartButton.onclick = () => {
+            document.getElementById('qr-result').textContent = 'No QR code detected.';
+            document.querySelectorAll('#qr-result p').forEach(p => p.remove());
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function (stream) {
+                const video = document.getElementById('preview');
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                requestAnimationFrame(tick);
+            });
+        };
+        document.body.insertBefore(startButton, restartButton);
+        restartButton.style.display = 'none';
+
+        function stopVideoStream() {
+            const video = document.getElementById('preview');
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+
+            tracks.forEach(function (track) {
+            track.stop();
+            });
+
+            video.srcObject = null;
+            restartButton.style.display = 'block';
+        }
+
+       function tick() {
+            const video = document.getElementById('preview');
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvasElement = document.createElement('canvas');
+                const canvas = canvasElement.getContext('2d');
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+                if (code) {
+                    const dish = JSON.parse(code.data);
+                    const items = dish.items;
+                    document.getElementById('qr-result').textContent = `${dish.dishName}`;
+
+                    const totalCalories = items.reduce((total, item) => {
+                        const itm = data.find(d => d.name === item.name);
+                        const cal = itm ? itm.calories : 100;
+                        return total + (cal * item.quantity);
+                    }, 0);
+                    const totalCaloriesElement = document.createElement('p');
+                    totalCaloriesElement.textContent = `Total Calories: ${totalCalories}`;
+                    totalCaloriesElement.style.fontSize = '20px';
+                    totalCaloriesElement.style.fontWeight = 'bold';
+                    totalCaloriesElement.style.color = '#333';
+                    totalCaloriesElement.style.backgroundColor = '#fff';
+                    totalCaloriesElement.style.padding = '20px';
+                    totalCaloriesElement.style.borderRadius = '10px';
+                    totalCaloriesElement.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+                    totalCaloriesElement.style.width = '80%';
+                    totalCaloriesElement.style.maxWidth = '600px';
+                    totalCaloriesElement.style.textAlign = 'center';
+                    totalCaloriesElement.style.marginTop = '20px';
+                    document.getElementById('qr-result').appendChild(totalCaloriesElement);
+                    items.forEach(item => {
+                        const itm = data.find(d => d.name === item.name);
+                        const cal = itm ? itm.calories : 100;
+                        item.calories = cal * item.quantity;
+                    });
+
+                    const updateTotalCalories = () => {
+                        const totalCalories = items.reduce((total, item) => total + item.calories, 0);
+                        totalCaloriesElement.textContent = `Total Calories: ${totalCalories}`;
+                    };
+
+                    items.forEach(item => {
+                        const resultElement = document.createElement('p');
+                        resultElement.style.fontSize = '18px';
+                        const decrementButton = document.createElement('button');
+                        decrementButton.textContent = '-';
+                        decrementButton.style.marginRight = '10px';
+                        decrementButton.onclick = () => {
+                            if (item.quantity > 1) {
+                                item.quantity--;
+                                item.calories = item.quantity * (data.find(d => d.name === item.name).calories);
+                                quantitySpan.textContent = item.quantity;
+                                resultElement.textContent = `${item.name}(${item.quantity}): ${item.calories / item.quantity} cal each => ${item.calories} cal`;
+                                resultElement.appendChild(decrementButton);
+                                resultElement.appendChild(quantitySpan);
+                                resultElement.appendChild(incrementButton);
+                                updateTotalCalories();
+                            }
+                        };
+
+                        const incrementButton = document.createElement('button');
+                        incrementButton.textContent = '+';
+                        incrementButton.style.marginLeft = '10px';
+                        incrementButton.onclick = () => {
+                            item.quantity++;
+                            item.calories = item.quantity * (data.find(d => d.name === item.name).calories);
+                            quantitySpan.textContent = item.quantity;
+                            resultElement.textContent = `${item.name}(${item.quantity}): ${item.calories / item.quantity} cal each => ${item.calories} cal`;
+                            resultElement.appendChild(decrementButton);
+                            resultElement.appendChild(quantitySpan);
+                            resultElement.appendChild(incrementButton);
+                            updateTotalCalories();
+                        };
+
+                        const quantitySpan = document.createElement('span');
+                        quantitySpan.textContent = item.quantity;
+                        quantitySpan.style.margin = '0 10px';
+                        resultElement.textContent = `${item.name}(${item.quantity}): ${item.calories / item.quantity} cal each => ${item.calories} cal`;
+                        resultElement.appendChild(decrementButton);
+                        resultElement.appendChild(quantitySpan);
+                        resultElement.appendChild(incrementButton);
+                        resultElement.style.color = '#333';
+                        resultElement.style.backgroundColor = '#f9f9f9';
+                        resultElement.style.padding = '10px';
+                        resultElement.style.borderRadius = '5px';
+                        resultElement.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                        resultElement.style.margin = '10px 0';
+                        document.getElementById('qr-result').appendChild(resultElement);
+                    });
+
+                    updateTotalCalories();
+
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                } else {
+                    requestAnimationFrame(tick);
+                }
+            } else {
+                requestAnimationFrame(tick);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
